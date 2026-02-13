@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FSTV 2.1 | World Streaming</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FSTV 3.0 | IPTV Streaming</title>
     
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -18,16 +18,12 @@
     <!-- HLS.js -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
     <!-- Firebase SDKs (Stable v10.13.1) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-        // Expose to window for React
         window.firebaseModules = { 
             initializeApp, getAuth, signInWithPopup, GoogleAuthProvider, 
             signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, 
@@ -40,29 +36,38 @@
         /* Modern Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
-
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+        
         body {
             background: #09090b;
             color: #e2e8f0;
-            font-family: 'Inter', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .glass {
-            background: rgba(18, 18, 23, 0.85);
+            background: rgba(20, 20, 25, 0.9);
             backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255,255,255,0.08);
         }
         
-        .card-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+        .safe-area-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
         }
-        
-        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .shimmer {
+            background: linear-gradient(90deg, #18181b 25%, #27272a 50%, #18181b 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
     </style>
 </head>
 <body>
@@ -71,12 +76,50 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo } = React;
 
-        // --- FIREBASE SETUP (YOUR KEYS ARE HERE) ---
+        // --- ICONS (Native React SVG) ---
+        const ICONS = {
+            menu: <><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></>,
+            x: <><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>,
+            globe: <><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></>,
+            heart: <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>,
+            tag: <><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l5 5a2 2 0 0 0 2.828 0l7-7a2 2 0 0 0 0-2.828l-5-5a2 2 0 0 0-1.414-.586"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></>,
+            check: <path d="M20 6 9 17l-5-5"/>,
+            search: <><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></>,
+            'arrow-left': <><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></>,
+            play: <polygon points="5 3 19 12 5 21 5 3"/>,
+            'alert-circle': <><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></>,
+            pin: <><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></>,
+            map: <><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></>,
+            'layout-grid': <><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></>,
+            home: <><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
+            filter: <><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></>,
+            'chevron-down': <path d="m6 9 6 6 6-6"/>
+        };
+
+        const Icon = ({ name, size = 24, className = "" }) => {
+            return (
+                <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width={size} 
+                    height={size} 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className={className}
+                >
+                    {ICONS[name] || null}
+                </svg>
+            );
+        };
+
+        // --- FIREBASE INIT ---
         const initFirebase = async () => {
             if (!window.firebaseModules) return null;
             const { initializeApp, getAuth, getFirestore } = window.firebaseModules;
             
-            // YOUR CONFIGURATION
             const config = {
                 apiKey: "AIzaSyBQGhUXBhgzga9bZ6dYtOJWQU8F-TkT05A",
                 authDomain: "fstv-a53f0.firebaseapp.com",
@@ -101,14 +144,16 @@
 
         // --- COMPONENTS ---
 
-        // 1. Auth Modal
         const AuthModal = ({ onClose, firebase, onLogin }) => {
             const [isSignUp, setIsSignUp] = useState(false);
             const [email, setEmail] = useState("");
             const [password, setPassword] = useState("");
             const [error, setError] = useState("");
+            const [loading, setLoading] = useState(false);
 
             const handleGoogle = async () => {
+                setLoading(true);
+                setError("");
                 const { signInWithPopup, GoogleAuthProvider } = window.firebaseModules;
                 const provider = new GoogleAuthProvider();
                 try {
@@ -116,51 +161,98 @@
                     onLogin(result.user);
                     onClose();
                 } catch (err) {
-                    console.error(err);
-                    setError("Google Sign-In failed. Check console or use Email.");
+                    setError(err.message.replace("Firebase: ", "").replace("Error ", ""));
+                } finally {
+                    setLoading(false);
                 }
             };
 
             const handleEmail = async (e) => {
                 e.preventDefault();
+                setLoading(true);
                 setError("");
                 const { signInWithEmailAndPassword, createUserWithEmailAndPassword } = window.firebaseModules;
                 try {
                     let cred;
-                    if (isSignUp) {
-                        cred = await createUserWithEmailAndPassword(firebase.auth, email, password);
-                    } else {
-                        cred = await signInWithEmailAndPassword(firebase.auth, email, password);
-                    }
+                    if (isSignUp) cred = await createUserWithEmailAndPassword(firebase.auth, email, password);
+                    else cred = await signInWithEmailAndPassword(firebase.auth, email, password);
                     onLogin(cred.user);
                     onClose();
                 } catch (err) {
-                    setError(err.message.replace("Firebase: ", ""));
+                    setError(err.message.replace("Firebase: ", "").replace("Error ", ""));
+                } finally {
+                    setLoading(false);
                 }
             };
 
             return (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-                    <div className="bg-[#18181b] p-8 rounded-2xl w-full max-w-md border border-white/10 shadow-2xl relative">
-                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
-                        <h2 className="text-2xl font-bold mb-6 text-center">{isSignUp ? "Create Account" : "Welcome Back"}</h2>
-                        <button onClick={handleGoogle} className="w-full bg-white text-black font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 mb-4 hover:bg-gray-200 transition">
-                            Continue with Google
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4">
+                    <div className="bg-[#18181b] p-6 rounded-2xl w-full max-w-sm border border-white/10 relative">
+                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 p-2 hover:text-white transition">
+                            <Icon name="x" size={24} />
                         </button>
-                        <div className="flex items-center gap-4 my-4"><div className="h-px bg-white/10 flex-1"></div><span className="text-xs text-gray-500">OR</span><div className="h-px bg-white/10 flex-1"></div></div>
-                        <form onSubmit={handleEmail} className="space-y-4">
-                            {error && <div className="p-3 bg-red-500/20 text-red-200 text-xs rounded border border-red-500/30">{error}</div>}
-                            <input type="email" placeholder="Email address" required value={email} onChange={e=>setEmail(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" />
-                            <input type="password" placeholder="Password" required value={password} onChange={e=>setPassword(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" />
-                            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-lg transition">{isSignUp ? "Sign Up" : "Log In"}</button>
+                        <h2 className="text-xl font-bold mb-6 text-center">{isSignUp ? "Create Account" : "Welcome Back"}</h2>
+                        
+                        <button 
+                            onClick={handleGoogle} 
+                            disabled={loading}
+                            className="w-full bg-white text-black font-medium py-3 rounded-xl flex items-center justify-center gap-2 mb-4 hover:bg-gray-100 transition disabled:opacity-50"
+                        >
+                            {loading ? "Loading..." : "Continue with Google"}
+                        </button>
+                        
+                        <div className="flex items-center gap-4 my-4">
+                            <div className="h-px bg-white/10 flex-1"></div>
+                            <span className="text-xs text-gray-500">OR</span>
+                            <div className="h-px bg-white/10 flex-1"></div>
+                        </div>
+                        
+                        <form onSubmit={handleEmail} className="space-y-3">
+                            {error && (
+                                <div className="p-3 bg-red-500/20 text-red-200 text-xs rounded border border-red-500/30">
+                                    {error}
+                                </div>
+                            )}
+                            <input 
+                                type="email" 
+                                placeholder="Email" 
+                                required 
+                                value={email} 
+                                onChange={e=>setEmail(e.target.value)} 
+                                className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition" 
+                            />
+                            <input 
+                                type="password" 
+                                placeholder="Password (min 6 chars)" 
+                                required 
+                                minLength={6}
+                                value={password} 
+                                onChange={e=>setPassword(e.target.value)} 
+                                className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition" 
+                            />
+                            <button 
+                                type="submit" 
+                                disabled={loading}
+                                className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition disabled:opacity-50"
+                            >
+                                {loading ? "Loading..." : (isSignUp ? "Sign Up" : "Log In")}
+                            </button>
                         </form>
-                        <p className="mt-4 text-center text-xs text-gray-400">{isSignUp ? "Already have an account?" : "Don't have an account?"} <button onClick={() => setIsSignUp(!isSignUp)} className="text-blue-400 ml-1 hover:underline">{isSignUp ? "Log In" : "Sign Up"}</button></p>
+                        
+                        <p className="mt-4 text-center text-xs text-gray-400">
+                            {isSignUp ? "Have an account?" : "No account?"} 
+                            <button 
+                                onClick={() => {setIsSignUp(!isSignUp); setError("");}} 
+                                className="text-blue-400 ml-1 font-bold hover:text-blue-300 transition"
+                            >
+                                {isSignUp ? "Log In" : "Sign Up"}
+                            </button>
+                        </p>
                     </div>
                 </div>
             );
         };
 
-        // 2. Video Player
         const VideoPlayer = ({ stream, toggleFav, isFav }) => {
             const videoRef = useRef(null);
             const hlsRef = useRef(null);
@@ -168,187 +260,255 @@
             useEffect(() => {
                 if (!stream) return;
                 const video = videoRef.current;
+                
                 if (Hls.isSupported()) {
                     if (hlsRef.current) hlsRef.current.destroy();
-                    const hls = new Hls();
+                    const hls = new Hls({
+                        enableWorker: true,
+                        lowLatencyMode: true,
+                    });
                     hlsRef.current = hls;
                     hls.loadSource(stream.url);
                     hls.attachMedia(video);
-                    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                        video.play().catch(() => {});
+                    });
                 } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                     video.src = stream.url;
                     video.addEventListener('loadedmetadata', () => video.play());
                 }
-                return () => { if (hlsRef.current) hlsRef.current.destroy(); };
+                
+                return () => { 
+                    if (hlsRef.current) {
+                        hlsRef.current.destroy();
+                        hlsRef.current = null;
+                    }
+                };
             }, [stream]);
 
             return (
-                <div className="w-full animate-fade-in">
-                    <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-white/10 group">
-                        <video ref={videoRef} className="w-full h-full" controls autoPlay />
+                <div className="w-full bg-black md:rounded-xl overflow-hidden shadow-2xl relative">
+                    <div className="aspect-video w-full bg-black">
+                        <video 
+                            ref={videoRef} 
+                            className="w-full h-full" 
+                            controls 
+                            autoPlay 
+                            playsInline
+                        />
                     </div>
-                    <div className="mt-4 flex justify-between items-start">
-                        <div>
-                            <h1 className="text-xl md:text-2xl font-bold text-white mb-1">{stream.name}</h1>
-                            <div className="flex gap-2 text-sm text-gray-400 items-center">
-                                <span className="bg-white/10 px-2 py-0.5 rounded text-xs">{stream.group || 'Live TV'}</span>
-                                {stream.language && <span className="uppercase text-xs border border-white/10 px-1 rounded">{stream.language[0]}</span>}
+                    
+                    {/* Metadata Overlay */}
+                    <div className="p-4 bg-[#121212]">
+                        <div className="flex justify-between items-start">
+                            <div className="flex-1 mr-4">
+                                <h1 className="text-lg font-bold text-white leading-tight">{stream.name}</h1>
+                                <p className="text-xs text-gray-400 mt-1">{stream.group || 'Live Stream'}</p>
                             </div>
+                            <button 
+                                onClick={() => toggleFav(stream)} 
+                                className={`p-2 rounded-full border transition ${
+                                    isFav 
+                                        ? 'bg-red-500/20 border-red-500 text-red-500' 
+                                        : 'border-white/10 text-gray-400 hover:border-red-500 hover:text-red-500'
+                                }`}
+                            >
+                                <Icon name="heart" size={20} className={isFav ? "fill-current" : ""} />
+                            </button>
                         </div>
-                        <button onClick={() => toggleFav(stream)} className={`p-2 rounded-full border transition ${isFav ? 'bg-red-500/20 border-red-500 text-red-500' : 'border-white/10 text-gray-400 hover:text-white'}`}>
-                            <i data-lucide="heart" className={`w-5 h-5 ${isFav ? 'fill-current' : ''}`}></i>
-                        </button>
                     </div>
-                    <hr className="border-white/10 my-4" />
                 </div>
             );
         };
 
-        // 3. Grid Card
         const ChannelCard = ({ channel, onClick, isFav }) => (
-            <div onClick={() => onClick(channel)} className="group relative flex flex-col p-3 rounded-xl glass hover:bg-white/5 transition cursor-pointer border border-transparent hover:border-blue-500/30 card-hover">
-                <div className="relative aspect-video bg-black/40 rounded-lg overflow-hidden mb-2 flex items-center justify-center p-2">
-                    {channel.logo ? <img src={channel.logo} className="w-full h-full object-contain" onError={(e) => e.target.style.display='none'} /> : <span className="text-xl font-bold text-white/20">FSTV</span>}
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <i data-lucide="play" className="fill-white text-white w-8 h-8"></i>
-                    </div>
-                    {isFav && <div className="absolute top-1 right-1 text-red-500"><i data-lucide="heart" className="w-4 h-4 fill-current"></i></div>}
+            <div 
+                onClick={() => onClick(channel)} 
+                className="relative flex flex-col bg-[#18181b] rounded-xl overflow-hidden active:scale-95 transition-transform duration-100 cursor-pointer hover:ring-2 hover:ring-blue-500"
+            >
+                <div className="relative aspect-video bg-black/40 flex items-center justify-center p-4">
+                    {channel.logo ? (
+                        <img 
+                            src={channel.logo} 
+                            alt={channel.name}
+                            className="w-full h-full object-contain" 
+                            loading="lazy" 
+                            onError={(e) => {
+                                e.target.style.display='none';
+                                e.target.parentElement.innerHTML = '<span class="text-2xl font-bold text-white/10">TV</span>';
+                            }}
+                        />
+                    ) : (
+                        <span className="text-2xl font-bold text-white/10">TV</span>
+                    )}
+                    {isFav && (
+                        <div className="absolute top-2 right-2 text-red-500 bg-black/50 rounded-full p-1">
+                            <Icon name="heart" size={14} className="fill-current" />
+                        </div>
+                    )}
                 </div>
-                <h3 className="text-sm font-medium truncate text-gray-200 group-hover:text-blue-400">{channel.name}</h3>
-                <p className="text-xs text-gray-500 truncate mt-1">{channel.group}</p>
+                <div className="p-3">
+                    <h3 className="text-sm font-medium truncate text-gray-200">{channel.name}</h3>
+                    <p className="text-[10px] text-gray-500 truncate mt-0.5">{channel.group}</p>
+                </div>
             </div>
         );
 
-        // 4. Main App
+        const LoadingSkeleton = () => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                {[...Array(12)].map((_, i) => (
+                    <div key={i} className="bg-[#18181b] rounded-xl overflow-hidden">
+                        <div className="aspect-video shimmer"></div>
+                        <div className="p-3 space-y-2">
+                            <div className="h-4 shimmer rounded"></div>
+                            <div className="h-3 shimmer rounded w-2/3"></div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+
         const App = () => {
             // Data
             const [countries, setCountries] = useState([]);
             const [languages, setLanguages] = useState([]);
-            const [globalCategories, setGlobalCategories] = useState([]); // For Explore
+            const [categories, setCategories] = useState([]);
             const [channels, setChannels] = useState([]);
             const [user, setUser] = useState(null);
             
             // View & Filters
-            const [view, setView] = useState('home'); 
-            const [selectedContext, setSelectedContext] = useState({ type: 'category', value: 'All' }); 
-            const [activeCategory, setActiveCategory] = useState('All'); // The Genre Filter
+            const [view, setView] = useState('home');
+            const [selectedContext, setSelectedContext] = useState({ 
+                type: 'country', 
+                value: 'ca', 
+                name: 'Canada' 
+            });
+            const [activeCategory, setActiveCategory] = useState('All');
             
             const [currentStream, setCurrentStream] = useState(null);
-            const [isSidebarOpen, setSidebarOpen] = useState(true);
+            const [isSidebarOpen, setSidebarOpen] = useState(false);
             const [search, setSearch] = useState("");
             const [showLogin, setShowLogin] = useState(false);
             const [loading, setLoading] = useState(false);
+            const [error, setError] = useState("");
             const [firebase, setFirebase] = useState(null);
 
             // Persistence
             const [pins, setPins] = useState([
-                { type: 'country', code: 'ca', name: 'Canada' },
-                { type: 'country', code: 'in', name: 'India' }
+                { type: 'country', code: 'ca', name: 'Canada', flag: '🇨🇦' },
+                { type: 'country', code: 'us', name: 'United States', flag: '🇺🇸' }
             ]);
             const [favorites, setFavorites] = useState([]);
 
-            // Init
             useEffect(() => {
                 let unsubscribeAuth = () => {};
-
                 const boot = async () => {
+                    // Load Metadata
                     try {
-                        const [cRes, lRes, catRes] = await Promise.all([
-                            fetch('https://iptv-org.github.io/api/countries.json'),
-                            fetch('https://iptv-org.github.io/api/languages.json'),
-                            fetch('https://iptv-org.github.io/api/categories.json')
+                        const [c, l, cat] = await Promise.all([
+                            fetch('https://iptv-org.github.io/api/countries.json').then(r=>r.json()),
+                            fetch('https://iptv-org.github.io/api/languages.json').then(r=>r.json()),
+                            fetch('https://iptv-org.github.io/api/categories.json').then(r=>r.json())
                         ]);
-                        setCountries(await cRes.json());
-                        setLanguages(await lRes.json());
-                        setGlobalCategories(await catRes.json());
-                    } catch (e) { console.error("API Error", e); }
-
-                    // Geo
-                    try {
-                        const geoRes = await fetch('https://ipapi.co/json/');
-                        const geo = await geoRes.json();
-                        if (geo.country_code) {
-                            const userCountry = geo.country_code.toLowerCase();
-                            setPins(prev => {
-                                if(prev.find(p => p.code === userCountry)) return prev;
-                                return [{ type: 'country', code: userCountry, name: geo.country_name }, ...prev];
-                            });
-                            loadPlaylist('country', userCountry, geo.country_name);
-                        } else {
-                            loadPlaylist('country', 'ca', 'Canada');
-                        }
-                    } catch (e) {
-                        loadPlaylist('country', 'ca', 'Canada');
+                        setCountries(c.sort((a, b) => a.name.localeCompare(b.name)));
+                        setLanguages(l.sort((a, b) => a.name.localeCompare(b.name)));
+                        setCategories(cat.sort((a, b) => a.name.localeCompare(b.name)));
+                    } catch (e) { 
+                        console.error("API Error", e); 
                     }
+
+                    // Initial Playlist (Canada)
+                    loadPlaylist('country', 'ca', 'Canada');
 
                     // Firebase
                     try {
                         const fb = await initFirebase();
                         setFirebase(fb);
-                        
-                        if (fb && fb.auth && window.firebaseModules) {
-                            const { onAuthStateChanged, doc, onSnapshot } = window.firebaseModules;
-                            
-                            // Check if function exists before calling
-                            if (typeof onAuthStateChanged === 'function') {
-                                unsubscribeAuth = onAuthStateChanged(fb.auth, (u) => {
-                                    setUser(u);
-                                    if (u && fb.db) {
-                                        // Subscribe to User Data
-                                        onSnapshot(doc(fb.db, 'artifacts', fb.appId, 'users', u.uid, 'profile'), (snap) => {
+                        if (fb && window.firebaseModules) {
+                            unsubscribeAuth = window.firebaseModules.onAuthStateChanged(fb.auth, (u) => {
+                                setUser(u);
+                                if (u && fb.db) {
+                                    window.firebaseModules.onSnapshot(
+                                        window.firebaseModules.doc(fb.db, 'artifacts', fb.appId, 'users', u.uid, 'profile'), 
+                                        (snap) => {
                                             if (snap.exists()) {
-                                                const data = snap.data();
-                                                if (data.favorites) setFavorites(data.favorites);
-                                                if (data.pins) setPins(data.pins);
+                                                const d = snap.data();
+                                                if (d.favorites) setFavorites(d.favorites);
+                                                if (d.pins) setPins(d.pins);
                                             }
-                                        });
-                                    }
-                                });
-                            }
+                                        }
+                                    );
+                                }
+                            });
                         }
                     } catch (e) {
-                        console.log("Firebase Connection Skipped/Failed:", e);
+                        console.error("Firebase Error", e);
                     }
                 };
                 boot();
                 return () => unsubscribeAuth();
             }, []);
 
-            // Logic
-            const loadPlaylist = async (type, code, name) => {
+            const loadPlaylist = async (type, code, name, flag = '') => {
                 setLoading(true);
+                setError("");
                 setChannels([]);
-                setSelectedContext({ type, value: code, name });
+                setSearch("");
+                setSidebarOpen(false);
+
+                setSelectedContext({ type, value: code, name, flag });
                 setView('home');
                 setActiveCategory('All'); 
                 
+                // Handle Favorites
+                if (type === 'fav') { 
+                    setLoading(false); 
+                    return; 
+                }
+
                 let url = '';
                 if (type === 'country') url = `https://iptv-org.github.io/iptv/countries/${code}.m3u`;
                 else if (type === 'lang') url = `https://iptv-org.github.io/iptv/languages/${code}.m3u`;
                 else if (type === 'category') url = `https://iptv-org.github.io/iptv/categories/${code}.m3u`;
-                else if (type === 'fav') { setLoading(false); return; }
 
                 try {
                     const res = await fetch(url);
-                    if (!res.ok) throw new Error("List not found");
+                    if (!res.ok) throw new Error("Playlist unavailable");
                     const text = await res.text();
+                    
+                    // Robust M3U Parsing
                     const parsed = [];
                     const lines = text.split('\n');
                     let curr = {};
+                    
                     lines.forEach(line => {
                         line = line.trim();
                         if (line.startsWith('#EXTINF:')) {
-                            const logo = line.match(/tvg-logo="(.*?)"/)?.[1];
-                            const group = line.match(/group-title="(.*?)"/)?.[1];
-                            const name = line.split(',').pop();
-                            curr = { name, logo, group: group || 'General', id: Math.random().toString(36) };
-                        } else if (line.startsWith('http')) {
-                            if (curr.name) { curr.url = line; parsed.push(curr); curr = {}; }
+                            const logoMatch = line.match(/tvg-logo="([^"]+)"/);
+                            const groupMatch = line.match(/group-title="([^"]+)"/);
+                            const nameMatch = line.split(',').pop();
+                            
+                            curr = { 
+                                name: nameMatch?.trim() || 'Unknown Channel',
+                                logo: logoMatch?.[1] || '',
+                                group: groupMatch?.[1] || 'General',
+                                id: Math.random().toString(36).substring(7)
+                            };
+                        } else if (line && line.startsWith('http') && curr.name) {
+                            curr.url = line;
+                            parsed.push({...curr});
+                            curr = {};
                         }
                     });
+
+                    if (parsed.length === 0) {
+                        throw new Error("No channels found in this playlist");
+                    }
+                    
                     setChannels(parsed);
                 } catch (e) {
                     console.error(e);
+                    setError(e.message || "Could not load channels. Try another source.");
                 } finally {
                     setLoading(false);
                 }
@@ -356,237 +516,638 @@
 
             const togglePin = async (item) => {
                 const exists = pins.find(p => p.code === item.code && p.type === item.type);
-                let newPins;
-                if (exists) newPins = pins.filter(p => p.code !== item.code || p.type !== item.type);
-                else newPins = [...pins, item];
+                let newPins = exists 
+                    ? pins.filter(p => !(p.code === item.code && p.type === item.type))
+                    : [...pins, item];
+                
                 setPins(newPins);
+                
                 if (user && firebase) {
-                    const { doc, setDoc } = window.firebaseModules;
-                    await setDoc(doc(firebase.db, 'artifacts', firebase.appId, 'users', user.uid, 'profile'), { pins: newPins }, { merge: true });
+                    try {
+                        await window.firebaseModules.setDoc(
+                            window.firebaseModules.doc(firebase.db, 'artifacts', firebase.appId, 'users', user.uid, 'profile'), 
+                            { pins: newPins }, 
+                            { merge: true }
+                        );
+                    } catch (e) {
+                        console.error("Pin save failed", e);
+                    }
                 }
             };
 
             const toggleFav = async (channel) => {
                 const exists = favorites.find(f => f.url === channel.url);
-                let newFavs;
-                if (exists) newFavs = favorites.filter(f => f.url !== channel.url);
-                else newFavs = [...favorites, channel];
+                let newFavs = exists 
+                    ? favorites.filter(f => f.url !== channel.url) 
+                    : [...favorites, channel];
+                
                 setFavorites(newFavs);
+                
                 if (user && firebase) {
-                    const { doc, setDoc } = window.firebaseModules;
-                    await setDoc(doc(firebase.db, 'artifacts', firebase.appId, 'users', user.uid, 'profile'), { favorites: newFavs }, { merge: true });
+                    try {
+                        await window.firebaseModules.setDoc(
+                            window.firebaseModules.doc(firebase.db, 'artifacts', firebase.appId, 'users', user.uid, 'profile'), 
+                            { favorites: newFavs }, 
+                            { merge: true }
+                        );
+                    } catch (e) {
+                        console.error("Favorite save failed", e);
+                    }
                 }
             };
 
             const playChannel = (channel) => {
                 setCurrentStream(channel);
                 setView('watch');
+                window.scrollTo({top: 0, behavior: 'smooth'});
             };
 
-            // Dynamic Categories derived from current channel list
+            // Derived Data
             const currentCategories = useMemo(() => {
-                const cats = new Set(channels.map(c => c.group));
-                return ['All', ...Array.from(cats).sort().filter(Boolean)];
-            }, [channels]);
+                if (selectedContext.type === 'fav') return ['All'];
+                const cats = new Set(channels.map(c => c.group).filter(Boolean));
+                return ['All', ...Array.from(cats).sort()];
+            }, [channels, selectedContext.type]);
 
             const displayedChannels = useMemo(() => {
                 let data = selectedContext.type === 'fav' ? favorites : channels;
+                
                 if (activeCategory !== 'All' && selectedContext.type !== 'fav') {
                     data = data.filter(c => c.group === activeCategory);
                 }
-                if (search) data = data.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
+                
+                if (search.trim()) {
+                    const searchLower = search.toLowerCase();
+                    data = data.filter(c => 
+                        c.name.toLowerCase().includes(searchLower) || 
+                        c.group?.toLowerCase().includes(searchLower)
+                    );
+                }
+                
                 return data;
             }, [channels, favorites, selectedContext, activeCategory, search]);
 
-            // --- RENDERERS ---
-
-            const renderSidebar = () => (
-                <div className={`fixed inset-y-0 left-0 bg-[#0f0f13] border-r border-white/5 w-64 transform transition-transform z-40 flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0`}>
-                    <div className="p-6">
-                        <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500 cursor-pointer" onClick={()=>loadPlaylist('country', 'ca', 'Canada')}>FSTV 2.1</h1>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto px-4 space-y-6">
-                        {/* Pinned */}
-                        <div>
-                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-3">Pinned</h3>
-                            <div className="space-y-1">
-                                {pins.map((pin, i) => (
-                                    <button key={i} onClick={()=>loadPlaylist(pin.type, pin.code, pin.name)} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition ${selectedContext.value === pin.code ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
-                                        <div className="flex items-center gap-2 truncate">
-                                            {pin.type === 'country' ? <span className="text-lg">🇨🇦</span> : pin.type === 'lang' ? <span className="text-xs border px-1 rounded">LN</span> : <i data-lucide="tag" className="w-3 h-3"></i>}
-                                            <span className="truncate">{pin.name}</span>
-                                        </div>
-                                        {selectedContext.value === pin.code && <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="h-px bg-white/5"></div>
-
-                        {/* Actions */}
-                         <div className="space-y-1">
-                            <button onClick={()=>setView('explore')} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${view === 'explore' ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
-                                <i data-lucide="globe" className="w-5 h-5"></i> Explore World
-                            </button>
-                            <button onClick={()=>{setSelectedContext({type:'fav', value:'fav', name:'Favorites'}); setView('home');}} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${selectedContext.type === 'fav' ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
-                                <i data-lucide="heart" className="w-5 h-5"></i> Favorites
-                            </button>
-                        </div>
-
-                        {/* Dynamic Genres (Only shows if channels are loaded) */}
-                        {channels.length > 0 && selectedContext.type !== 'fav' && (
-                            <div>
-                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-3 mt-4">Filter: {selectedContext.name}</h3>
-                                <div className="space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
-                                    {currentCategories.map((cat, i) => (
-                                        <button key={i} onClick={()=>setActiveCategory(cat)} className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition flex justify-between ${activeCategory === cat ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
-                                            <span className="truncate">{cat}</span>
-                                            {activeCategory === cat && <i data-lucide="check" className="w-3 h-3"></i>}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Profile Footer */}
-                    <div className="p-4 border-t border-white/5">
-                        {user ? (
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center font-bold text-xs">{user.email[0].toUpperCase()}</div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium truncate">{user.email.split('@')[0]}</p>
-                                    <button onClick={()=>window.firebaseModules.signOut(firebase.auth)} className="text-xs text-red-400 hover:underline">Sign Out</button>
-                                </div>
-                            </div>
-                        ) : (
-                            <button onClick={()=>setShowLogin(true)} className="w-full bg-white/10 hover:bg-white/20 py-2 rounded-lg text-sm font-medium transition">
-                                Login / Sync
-                            </button>
-                        )}
-                    </div>
-                </div>
-            );
-
-            const renderExplore = () => (
-                <div className="p-6 pb-20 animate-fade-in">
-                    <h2 className="text-3xl font-bold mb-2">Explore the World</h2>
-                    <p className="text-gray-400 mb-8">Select a country, language, or global category.</p>
-
-                    {/* Global Categories Grid */}
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><i data-lucide="layout-grid" className="w-5 h-5 text-green-400"></i> Global Categories</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
-                        {globalCategories.slice(0, 12).map(c => {
-                            const isPinned = pins.some(p => p.code === c.id && p.type === 'category');
-                            return (
-                                <div key={c.id} className="glass p-3 rounded-xl flex items-center justify-between group hover:bg-white/10 transition">
-                                    <button onClick={()=>loadPlaylist('category', c.id, c.name)} className="flex items-center gap-3 text-left flex-1 min-w-0">
-                                        <i data-lucide="tag" className="w-4 h-4 text-gray-400"></i>
-                                        <span className="text-sm font-medium truncate">{c.name}</span>
-                                    </button>
-                                    <button onClick={()=>togglePin({type:'category', code:c.id, name:c.name})} className={`opacity-0 group-hover:opacity-100 transition ${isPinned ? 'opacity-100 text-blue-400' : 'text-gray-500 hover:text-white'}`}>
-                                        <i data-lucide="pin" className="w-4 h-4"></i>
-                                    </button>
-                                </div>
-                            )
-                        })}
-                    </div>
-
-                    {/* Countries Grid */}
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><i data-lucide="map" className="w-5 h-5 text-blue-400"></i> Countries</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
-                        {countries.filter(c => c.name.toLowerCase().includes(search.toLowerCase())).slice(0, 18).map(c => {
-                            const isPinned = pins.some(p => p.code === c.code.toLowerCase());
-                            return (
-                                <div key={c.code} className="glass p-3 rounded-xl flex items-center justify-between group hover:bg-white/10 transition">
-                                    <button onClick={()=>loadPlaylist('country', c.code.toLowerCase(), c.name)} className="flex items-center gap-3 text-left flex-1 min-w-0">
-                                        <span className="text-2xl">{c.flag}</span>
-                                        <span className="text-sm font-medium truncate">{c.name}</span>
-                                    </button>
-                                    <button onClick={()=>togglePin({type:'country', code:c.code.toLowerCase(), name:c.name})} className={`opacity-0 group-hover:opacity-100 transition ${isPinned ? 'opacity-100 text-blue-400' : 'text-gray-500 hover:text-white'}`}>
-                                        <i data-lucide="pin" className="w-4 h-4"></i>
-                                    </button>
-                                </div>
-                            )
-                        })}
-                    </div>
-                </div>
-            );
-
             return (
-                <div className="flex h-screen w-full">
-                    {renderSidebar()}
+                <div className="flex h-screen w-full bg-[#09090b]">
                     
-                    <div className="flex-1 flex flex-col relative bg-[#09090b]">
+                    {/* MOBILE SIDEBAR OVERLAY */}
+                    <div 
+                        className={`fixed inset-0 z-50 bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${
+                            isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                        }`} 
+                        onClick={() => setSidebarOpen(false)}
+                    ></div>
+                    
+                    {/* SIDEBAR */}
+                    <div className={`fixed inset-y-0 left-0 w-[80%] max-w-sm bg-[#121212] border-r border-white/10 z-50 transform transition-transform duration-300 flex flex-col shadow-2xl ${
+                        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                    } md:relative md:translate-x-0 md:w-64`}>
+                        
                         {/* Header */}
-                        <div className="h-16 border-b border-white/5 flex items-center px-6 gap-4 bg-black/20 backdrop-blur z-20">
-                            <button onClick={()=>setSidebarOpen(!isSidebarOpen)} className="md:hidden p-2 text-gray-400"><i data-lucide="menu"></i></button>
-                            
-                            <div className="flex-1 max-w-lg relative">
-                                <input type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder={`Search ${view === 'explore' ? 'Categories...' : selectedContext.name + '...'}`} className="w-full bg-white/5 border border-white/10 rounded-full py-2 pl-10 pr-4 text-sm focus:bg-black focus:border-blue-500 transition outline-none" />
-                                <i data-lucide="search" className="absolute left-3.5 top-2.5 w-4 h-4 text-gray-500"></i>
+                        <div className="p-6 pt-10 md:pt-6 flex justify-between items-center border-b border-white/5">
+                            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
+                                FSTV
+                            </h1>
+                            <button 
+                                onClick={()=>setSidebarOpen(false)} 
+                                className="md:hidden p-2 hover:bg-white/5 rounded-lg transition"
+                            >
+                                <Icon name="x" className="text-gray-400" />
+                            </button>
+                        </div>
+                        
+                        {/* Navigation */}
+                        <div className="flex-1 overflow-y-auto px-4 pb-4 pt-4">
+                            <div className="space-y-1 mb-6">
+                                <button 
+                                    onClick={()=>{
+                                        setView('home'); 
+                                        setSidebarOpen(false);
+                                    }} 
+                                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition ${
+                                        view === 'home' && selectedContext.type !== 'fav' 
+                                            ? 'bg-blue-600 text-white font-medium' 
+                                            : 'text-gray-400 hover:bg-white/5'
+                                    }`}
+                                >
+                                    <Icon name="home" size={20} /> Home
+                                </button>
+                                
+                                <button 
+                                    onClick={()=>{
+                                        setView('explore'); 
+                                        setSidebarOpen(false);
+                                    }} 
+                                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition ${
+                                        view === 'explore' 
+                                            ? 'bg-blue-600 text-white font-medium' 
+                                            : 'text-gray-400 hover:bg-white/5'
+                                    }`}
+                                >
+                                    <Icon name="globe" size={20} /> Explore World
+                                </button>
+                                
+                                <button 
+                                    onClick={()=>{
+                                        loadPlaylist('fav', 'fav', 'Favorites');
+                                    }} 
+                                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition ${
+                                        selectedContext.type === 'fav' 
+                                            ? 'bg-blue-600 text-white font-medium' 
+                                            : 'text-gray-400 hover:bg-white/5'
+                                    }`}
+                                >
+                                    <Icon name="heart" size={20} /> 
+                                    Favorites
+                                    {favorites.length > 0 && (
+                                        <span className="ml-auto text-xs bg-white/10 px-2 py-0.5 rounded-full">
+                                            {favorites.length}
+                                        </span>
+                                    )}
+                                </button>
                             </div>
 
-                            <div className="text-xs font-bold px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20 hidden md:block">
-                                {selectedContext.name} {activeCategory !== 'All' && ` > ${activeCategory}`}
-                            </div>
+                            {/* Pinned Items */}
+                            {pins.length > 0 && (
+                                <>
+                                    <div className="mb-2 px-3 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        Pinned
+                                    </div>
+                                    <div className="space-y-1 mb-6">
+                                        {pins.map((pin, i) => (
+                                            <button 
+                                                key={i} 
+                                                onClick={()=>loadPlaylist(pin.type, pin.code, pin.name, pin.flag)} 
+                                                className={`w-full flex items-center justify-between px-3 py-3 rounded-xl transition text-sm ${
+                                                    selectedContext.value === pin.code && selectedContext.type === pin.type
+                                                        ? 'bg-white/10 text-white' 
+                                                        : 'text-gray-400 hover:bg-white/5'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3 truncate">
+                                                    {pin.flag ? (
+                                                        <span className="text-xl">{pin.flag}</span>
+                                                    ) : (
+                                                        <Icon name="tag" size={16} />
+                                                    )}
+                                                    <span className="truncate">{pin.name}</span>
+                                                </div>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        togglePin(pin);
+                                                    }}
+                                                    className="text-gray-500 hover:text-red-500 transition"
+                                                >
+                                                    <Icon name="x" size={14} />
+                                                </button>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Categories Filter */}
+                            {channels.length > 0 && selectedContext.type !== 'fav' && view === 'home' && (
+                                <>
+                                    <div className="mb-2 px-3 text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                                        <Icon name="filter" size={12} />
+                                        Categories
+                                    </div>
+                                    <div className="space-y-1 max-h-96 overflow-y-auto">
+                                        {currentCategories.map((cat, i) => {
+                                            const count = cat === 'All' 
+                                                ? channels.length 
+                                                : channels.filter(c => c.group === cat).length;
+                                            
+                                            return (
+                                                <button 
+                                                    key={i} 
+                                                    onClick={()=>{
+                                                        setActiveCategory(cat); 
+                                                        setSidebarOpen(false);
+                                                    }} 
+                                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex justify-between items-center ${
+                                                        activeCategory === cat 
+                                                            ? 'text-blue-400 bg-blue-500/10 font-medium' 
+                                                            : 'text-gray-400 hover:bg-white/5'
+                                                    }`}
+                                                >
+                                                    <span className="truncate">{cat}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-gray-600">{count}</span>
+                                                        {activeCategory === cat && <Icon name="check" size={14} />}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </>
+                            )}
                         </div>
 
-                        {/* Content */}
-                        <div className="flex-1 overflow-y-auto relative scroll-smooth">
-                            {view === 'watch' && currentStream ? (
-                                <div className="flex flex-col lg:flex-row h-full">
-                                    <div className="flex-1 p-6 overflow-y-auto">
-                                        <button onClick={()=>setView('home')} className="mb-4 text-sm text-gray-400 hover:text-white flex items-center gap-2"><i data-lucide="arrow-left" className="w-4 h-4"></i> Back to Grid</button>
-                                        <VideoPlayer stream={currentStream} toggleFav={toggleFav} isFav={favorites.some(f=>f.url===currentStream.url)} />
+                        {/* User Footer */}
+                        <div className="p-4 border-t border-white/5 safe-area-bottom">
+                            {user ? (
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg">
+                                        {user.email[0].toUpperCase()}
                                     </div>
-                                    <div className="w-full lg:w-96 border-l border-white/5 bg-[#0c0c0e] p-4 overflow-y-auto">
-                                        <h3 className="font-bold mb-4 text-gray-400 text-xs uppercase">Up Next in {activeCategory !== 'All' ? activeCategory : selectedContext.name}</h3>
-                                        <div className="space-y-2">
-                                            {displayedChannels.filter(c=>c.url!==currentStream.url).slice(0,50).map((c,i) => (
-                                                <div key={i} onClick={()=>playChannel(c)} className="flex gap-3 p-2 hover:bg-white/5 rounded cursor-pointer group">
-                                                    <div className="w-24 aspect-video bg-black/50 rounded flex items-center justify-center"><img src={c.logo} className="h-full object-contain" onError={e=>e.target.style.display='none'}/></div>
-                                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                                        <p className="text-sm font-medium truncate group-hover:text-blue-400">{c.name}</p>
-                                                        <p className="text-xs text-gray-500">{c.group}</p>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs truncate text-gray-200 font-medium">{user.email}</p>
+                                        <button 
+                                            onClick={()=>window.firebaseModules.signOut(firebase.auth)} 
+                                            className="text-xs text-red-400 hover:text-red-300 transition"
+                                        >
+                                            Sign Out
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button 
+                                    onClick={()=>setShowLogin(true)} 
+                                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 py-3 rounded-xl text-sm font-bold hover:from-blue-700 hover:to-indigo-700 transition shadow-lg"
+                                >
+                                    Login to Sync
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* MAIN CONTENT */}
+                    <div className="flex-1 flex flex-col relative h-full w-full bg-[#09090b]">
+                        
+                        {/* Header */}
+                        <div className="h-16 flex items-center px-4 gap-3 bg-black/40 backdrop-blur z-20 border-b border-white/5 flex-shrink-0">
+                            <button 
+                                onClick={()=>setSidebarOpen(true)} 
+                                className="md:hidden p-2 -ml-2 hover:bg-white/5 rounded-lg transition"
+                            >
+                                <Icon name="menu" className="text-white" />
+                            </button>
+                            
+                            {/* Search Bar */}
+                            <div className="flex-1 relative">
+                                <input 
+                                    type="text" 
+                                    value={search} 
+                                    onChange={e=>setSearch(e.target.value)} 
+                                    placeholder={
+                                        view === 'explore' 
+                                            ? 'Search countries...' 
+                                            : selectedContext.type === 'fav'
+                                                ? 'Search favorites...'
+                                                : `Search ${selectedContext.name}...`
+                                    } 
+                                    className="w-full bg-[#1e1e24] rounded-full py-2.5 pl-10 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition shadow-inner" 
+                                />
+                                <div className="absolute left-3.5 top-3 text-gray-500">
+                                    <Icon name="search" size={16} />
+                                </div>
+                                {search && (
+                                    <button
+                                        onClick={() => setSearch("")}
+                                        className="absolute right-3 top-2.5 text-gray-500 hover:text-white transition"
+                                    >
+                                        <Icon name="x" size={16} />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Context Indicator (Desktop) */}
+                            {view === 'home' && selectedContext.type !== 'fav' && (
+                                <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full">
+                                    {selectedContext.flag && <span className="text-lg">{selectedContext.flag}</span>}
+                                    <span className="text-sm font-medium text-gray-300">{selectedContext.name}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Content Area */}
+                        <div className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth safe-area-bottom">
+                            
+                            {/* ERROR STATE */}
+                            {error && !loading && (
+                                <div className="flex flex-col items-center justify-center h-96 text-center px-6">
+                                    <div className="bg-red-500/10 p-6 rounded-full mb-4">
+                                        <Icon name="alert-circle" size={40} className="text-red-500" />
+                                    </div>
+                                    <h3 className="text-xl font-bold mb-2">Something Went Wrong</h3>
+                                    <p className="text-gray-400 text-sm mb-6 max-w-md">{error}</p>
+                                    <button 
+                                        onClick={()=>{
+                                            setView('explore');
+                                            setError("");
+                                        }} 
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition"
+                                    >
+                                        Browse Other Channels
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* WATCH VIEW */}
+                            {view === 'watch' && currentStream && (
+                                <div className="flex flex-col lg:flex-row h-full">
+                                    <div className="flex-1 lg:overflow-y-auto">
+                                        <div className="sticky top-0 z-30 bg-black">
+                                            <button 
+                                                onClick={()=>setView('home')} 
+                                                className="absolute top-4 left-4 z-40 bg-black/70 hover:bg-black p-2 rounded-full backdrop-blur md:hidden transition"
+                                            >
+                                                <Icon name="arrow-left" className="text-white" size={20} />
+                                            </button>
+                                            <VideoPlayer 
+                                                stream={currentStream} 
+                                                toggleFav={toggleFav} 
+                                                isFav={favorites.some(f=>f.url===currentStream.url)} 
+                                            />
+                                        </div>
+                                        
+                                        {/* Mobile: Up Next List */}
+                                        <div className="p-4 lg:hidden">
+                                            <h3 className="font-bold mb-3 text-gray-400 text-xs uppercase tracking-wider">
+                                                Up Next
+                                            </h3>
+                                            <div className="space-y-2">
+                                                {displayedChannels
+                                                    .filter(c=>c.url!==currentStream.url)
+                                                    .slice(0, 20)
+                                                    .map((c,i) => (
+                                                        <div 
+                                                            key={i} 
+                                                            onClick={()=>playChannel(c)} 
+                                                            className="flex gap-3 p-3 bg-[#18181b] hover:bg-[#1f1f23] rounded-xl cursor-pointer transition active:scale-98"
+                                                        >
+                                                            <div className="w-24 aspect-video bg-black rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                                {c.logo ? (
+                                                                    <img 
+                                                                        src={c.logo} 
+                                                                        alt={c.name}
+                                                                        className="h-full object-contain" 
+                                                                        onError={e=>e.target.style.display='none'}
+                                                                    />
+                                                                ) : (
+                                                                    <span className="text-white/10 font-bold">TV</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                                                <p className="text-sm font-medium truncate text-white">{c.name}</p>
+                                                                <p className="text-xs text-gray-500 truncate">{c.group}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Desktop: Up Next Sidebar */}
+                                    <div className="hidden lg:block w-96 border-l border-white/5 bg-[#0c0c0e] overflow-y-auto h-full">
+                                        <div className="p-4 sticky top-0 bg-[#0c0c0e] border-b border-white/5 z-10">
+                                            <h3 className="font-bold text-gray-400 text-xs uppercase tracking-wider">
+                                                Up Next
+                                            </h3>
+                                        </div>
+                                        <div className="p-4 space-y-2">
+                                            {displayedChannels
+                                                .filter(c=>c.url!==currentStream.url)
+                                                .slice(0, 50)
+                                                .map((c,i) => (
+                                                    <div 
+                                                        key={i} 
+                                                        onClick={()=>playChannel(c)} 
+                                                        className="flex gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer transition"
+                                                    >
+                                                        <div className="w-28 aspect-video bg-black rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                            {c.logo ? (
+                                                                <img 
+                                                                    src={c.logo} 
+                                                                    alt={c.name}
+                                                                    className="h-full object-contain" 
+                                                                    onError={e=>e.target.style.display='none'}
+                                                                />
+                                                            ) : (
+                                                                <span className="text-white/10 font-bold">TV</span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                                            <p className="text-sm font-medium truncate text-white">{c.name}</p>
+                                                            <p className="text-xs text-gray-500 truncate">{c.group}</p>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                ))
+                                            }
                                         </div>
                                     </div>
                                 </div>
-                            ) : view === 'explore' ? (
-                                renderExplore()
-                            ) : (
-                                // Home Grid
-                                <div className="p-6">
-                                    {loading ? (
-                                        <div className="text-center py-20 text-gray-500"><div className="animate-spin w-8 h-8 border-t-2 border-blue-500 rounded-full mx-auto mb-4"></div>Fetching Channels...</div>
+                            )}
+
+                            {/* EXPLORE VIEW */}
+                            {view === 'explore' && !loading && !error && (
+                                <div className="p-4 pb-20">
+                                    <h2 className="text-3xl font-bold mb-6">Explore the World</h2>
+                                    
+                                    {/* Categories Section */}
+                                    {categories.length > 0 && (
+                                        <>
+                                            <h3 className="text-lg font-bold mb-4 text-gray-400 flex items-center gap-2">
+                                                <Icon name="layout-grid" size={20} />
+                                                Categories
+                                            </h3>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
+                                                {categories.slice(0, 20).map(c => {
+                                                    const isPinned = pins.some(p => p.code === c.id && p.type === 'category');
+                                                    return (
+                                                        <div 
+                                                            key={c.id} 
+                                                            onClick={()=>loadPlaylist('category', c.id, c.name)}
+                                                            className="bg-gradient-to-br from-[#18181b] to-[#1f1f23] p-4 rounded-xl flex items-center justify-between cursor-pointer hover:ring-2 hover:ring-blue-500 transition active:scale-95 group"
+                                                        >
+                                                            <span className="font-medium text-white group-hover:text-blue-400 transition">
+                                                                {c.name}
+                                                            </span>
+                                                            <button 
+                                                                onClick={(e)=>{
+                                                                    e.stopPropagation(); 
+                                                                    togglePin({type:'category', code:c.id, name:c.name});
+                                                                }} 
+                                                                className={`p-1.5 rounded-lg transition ${
+                                                                    isPinned 
+                                                                        ? 'text-blue-500 bg-blue-500/20' 
+                                                                        : 'text-gray-500 hover:text-blue-500 hover:bg-blue-500/10'
+                                                                }`}
+                                                            >
+                                                                <Icon name="pin" size={16} />
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </>
+                                    )}
+                                    
+                                    {/* Countries Section */}
+                                    <h3 className="text-lg font-bold mb-4 text-gray-400 flex items-center gap-2">
+                                        <Icon name="globe" size={20} />
+                                        Countries ({countries.filter(c => c.name.toLowerCase().includes(search.toLowerCase())).length})
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                        {countries
+                                            .filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+                                            .map(c => {
+                                                const isPinned = pins.some(p => p.code === c.code.toLowerCase() && p.type === 'country');
+                                                return (
+                                                    <div 
+                                                        key={c.code} 
+                                                        onClick={()=>loadPlaylist('country', c.code.toLowerCase(), c.name, c.flag)}
+                                                        className="bg-gradient-to-br from-[#18181b] to-[#1f1f23] p-4 rounded-xl flex items-center justify-between cursor-pointer hover:ring-2 hover:ring-blue-500 transition active:scale-95 group"
+                                                    >
+                                                        <div className="flex items-center gap-3 truncate flex-1">
+                                                            <span className="text-2xl flex-shrink-0">{c.flag}</span>
+                                                            <span className="text-sm font-medium truncate text-white group-hover:text-blue-400 transition">
+                                                                {c.name}
+                                                            </span>
+                                                        </div>
+                                                        <button 
+                                                            onClick={(e)=>{
+                                                                e.stopPropagation(); 
+                                                                togglePin({
+                                                                    type:'country', 
+                                                                    code:c.code.toLowerCase(), 
+                                                                    name:c.name,
+                                                                    flag: c.flag
+                                                                });
+                                                            }} 
+                                                            className={`p-1.5 rounded-lg transition flex-shrink-0 ${
+                                                                isPinned 
+                                                                    ? 'text-blue-500 bg-blue-500/20' 
+                                                                    : 'text-gray-500 hover:text-blue-500 hover:bg-blue-500/10'
+                                                            }`}
+                                                        >
+                                                            <Icon name="pin" size={16} />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })
+                                        }
+                                    </div>
+
+                                    {/* Languages Section */}
+                                    {languages.length > 0 && (
+                                        <>
+                                            <h3 className="text-lg font-bold mt-8 mb-4 text-gray-400 flex items-center gap-2">
+                                                <Icon name="map" size={20} />
+                                                Languages
+                                            </h3>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                                {languages.slice(0, 20).map(l => {
+                                                    const isPinned = pins.some(p => p.code === l.code && p.type === 'lang');
+                                                    return (
+                                                        <div 
+                                                            key={l.code} 
+                                                            onClick={()=>loadPlaylist('lang', l.code, l.name)}
+                                                            className="bg-gradient-to-br from-[#18181b] to-[#1f1f23] p-4 rounded-xl flex items-center justify-between cursor-pointer hover:ring-2 hover:ring-blue-500 transition active:scale-95 group"
+                                                        >
+                                                            <span className="font-medium text-white group-hover:text-blue-400 transition truncate">
+                                                                {l.name}
+                                                            </span>
+                                                            <button 
+                                                                onClick={(e)=>{
+                                                                    e.stopPropagation(); 
+                                                                    togglePin({type:'lang', code:l.code, name:l.name});
+                                                                }} 
+                                                                className={`p-1.5 rounded-lg transition ${
+                                                                    isPinned 
+                                                                        ? 'text-blue-500 bg-blue-500/20' 
+                                                                        : 'text-gray-500 hover:text-blue-500 hover:bg-blue-500/10'
+                                                                }`}
+                                                            >
+                                                                <Icon name="pin" size={16} />
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* HOME VIEW (Channel Grid) */}
+                            {view === 'home' && !loading && !error && (
+                                <div className="p-4 pb-24">
+                                    {displayedChannels.length > 0 ? (
+                                        <>
+                                            <div className="mb-4 flex items-center justify-between">
+                                                <h2 className="text-lg font-bold text-gray-400">
+                                                    {selectedContext.type === 'fav' 
+                                                        ? `${displayedChannels.length} Favorites` 
+                                                        : `${displayedChannels.length} Channels`
+                                                    }
+                                                </h2>
+                                            </div>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                                                {displayedChannels.map((c, i) => (
+                                                    <ChannelCard 
+                                                        key={i} 
+                                                        channel={c} 
+                                                        onClick={playChannel} 
+                                                        isFav={favorites.some(f=>f.url===c.url)} 
+                                                    />
+                                                ))}
+                                            </div>
+                                        </>
                                     ) : (
-                                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                                            {displayedChannels.slice(0, 100).map((c, i) => (
-                                                <ChannelCard key={i} channel={c} onClick={playChannel} isFav={favorites.some(f=>f.url===c.url)} />
-                                            ))}
+                                        <div className="flex flex-col items-center justify-center h-96 text-center px-6">
+                                            <div className="bg-white/5 p-6 rounded-full mb-4">
+                                                <Icon name="search" size={40} className="text-gray-600" />
+                                            </div>
+                                            <h3 className="text-xl font-bold mb-2">No Channels Found</h3>
+                                            <p className="text-gray-400 text-sm mb-6">
+                                                {search 
+                                                    ? `No results for "${search}"` 
+                                                    : selectedContext.type === 'fav'
+                                                        ? "Start adding channels to your favorites!"
+                                                        : "Try selecting a different category or region"
+                                                }
+                                            </p>
+                                            {search && (
+                                                <button 
+                                                    onClick={()=>setSearch("")}
+                                                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition"
+                                                >
+                                                    Clear Search
+                                                </button>
+                                            )}
                                         </div>
                                     )}
-                                    {!loading && displayedChannels.length === 0 && <div className="text-center py-20 text-gray-500">No channels found. Try the Explore tab!</div>}
+                                </div>
+                            )}
+
+                            {/* LOADING STATE */}
+                            {loading && (
+                                <div className="p-4 pb-20">
+                                    <LoadingSkeleton />
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {showLogin && <AuthModal onClose={()=>setShowLogin(false)} firebase={firebase} onLogin={(u)=>setUser(u)} />}
+                    {/* AUTH MODAL */}
+                    {showLogin && firebase && (
+                        <AuthModal 
+                            onClose={()=>setShowLogin(false)} 
+                            firebase={firebase} 
+                            onLogin={(u)=>setUser(u)} 
+                        />
+                    )}
                 </div>
             );
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
-        
-        setTimeout(() => window.lucide && window.lucide.createIcons(), 500);
-        setInterval(() => window.lucide && window.lucide.createIcons(), 2000); 
     </script>
 </body>
 </html>
