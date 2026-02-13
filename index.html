@@ -5,20 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FSTV 3.0 | IPTV Streaming</title>
     
-    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- HLS.js -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     
-    <!-- Firebase SDKs (Stable v10.13.1) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
@@ -33,7 +25,6 @@
     </script>
 
     <style>
-        /* Modern Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
@@ -76,7 +67,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo } = React;
 
-        // --- ICONS (Native React SVG) ---
+        // --- ICONS ---
         const ICONS = {
             menu: <><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></>,
             x: <><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>,
@@ -96,24 +87,11 @@
             'chevron-down': <path d="m6 9 6 6 6-6"/>
         };
 
-        const Icon = ({ name, size = 24, className = "" }) => {
-            return (
-                <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width={size} 
-                    height={size} 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    className={className}
-                >
-                    {ICONS[name] || null}
-                </svg>
-            );
-        };
+        const Icon = ({ name, size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {ICONS[name] || null}
+            </svg>
+        );
 
         // --- FIREBASE INIT ---
         const initFirebase = async () => {
@@ -187,17 +165,13 @@
 
             return (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4">
-                    <div className="bg-[#18181b] p-6 rounded-2xl w-full max-w-sm border border-white/10 relative">
-                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 p-2 hover:text-white transition">
+                    <div className="bg-[#18181b] p-6 rounded-2xl w-full max-w-sm border border-white/10 relative shadow-2xl">
+                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white p-2 transition">
                             <Icon name="x" size={24} />
                         </button>
                         <h2 className="text-xl font-bold mb-6 text-center">{isSignUp ? "Create Account" : "Welcome Back"}</h2>
                         
-                        <button 
-                            onClick={handleGoogle} 
-                            disabled={loading}
-                            className="w-full bg-white text-black font-medium py-3 rounded-xl flex items-center justify-center gap-2 mb-4 hover:bg-gray-100 transition disabled:opacity-50"
-                        >
+                        <button onClick={handleGoogle} disabled={loading} className="w-full bg-white text-black font-medium py-3 rounded-xl flex items-center justify-center gap-2 mb-4 hover:bg-gray-100 transition disabled:opacity-50">
                             {loading ? "Loading..." : "Continue with Google"}
                         </button>
                         
@@ -208,43 +182,17 @@
                         </div>
                         
                         <form onSubmit={handleEmail} className="space-y-3">
-                            {error && (
-                                <div className="p-3 bg-red-500/20 text-red-200 text-xs rounded border border-red-500/30">
-                                    {error}
-                                </div>
-                            )}
-                            <input 
-                                type="email" 
-                                placeholder="Email" 
-                                required 
-                                value={email} 
-                                onChange={e=>setEmail(e.target.value)} 
-                                className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition" 
-                            />
-                            <input 
-                                type="password" 
-                                placeholder="Password (min 6 chars)" 
-                                required 
-                                minLength={6}
-                                value={password} 
-                                onChange={e=>setPassword(e.target.value)} 
-                                className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition" 
-                            />
-                            <button 
-                                type="submit" 
-                                disabled={loading}
-                                className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition disabled:opacity-50"
-                            >
+                            {error && <div className="p-3 bg-red-500/20 text-red-200 text-xs rounded border border-red-500/30">{error}</div>}
+                            <input type="email" placeholder="Email" required value={email} onChange={e=>setEmail(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-blue-500" />
+                            <input type="password" placeholder="Password (min 6 chars)" required minLength={6} value={password} onChange={e=>setPassword(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-blue-500" />
+                            <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition disabled:opacity-50">
                                 {loading ? "Loading..." : (isSignUp ? "Sign Up" : "Log In")}
                             </button>
                         </form>
                         
                         <p className="mt-4 text-center text-xs text-gray-400">
                             {isSignUp ? "Have an account?" : "No account?"} 
-                            <button 
-                                onClick={() => {setIsSignUp(!isSignUp); setError("");}} 
-                                className="text-blue-400 ml-1 font-bold hover:text-blue-300 transition"
-                            >
+                            <button onClick={() => {setIsSignUp(!isSignUp); setError("");}} className="text-blue-400 ml-1 font-bold hover:text-blue-300 transition">
                                 {isSignUp ? "Log In" : "Sign Up"}
                             </button>
                         </p>
@@ -263,16 +211,11 @@
                 
                 if (Hls.isSupported()) {
                     if (hlsRef.current) hlsRef.current.destroy();
-                    const hls = new Hls({
-                        enableWorker: true,
-                        lowLatencyMode: true,
-                    });
+                    const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
                     hlsRef.current = hls;
                     hls.loadSource(stream.url);
                     hls.attachMedia(video);
-                    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                        video.play().catch(() => {});
-                    });
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
                 } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                     video.src = stream.url;
                     video.addEventListener('loadedmetadata', () => video.play());
@@ -289,30 +232,16 @@
             return (
                 <div className="w-full bg-black md:rounded-xl overflow-hidden shadow-2xl relative">
                     <div className="aspect-video w-full bg-black">
-                        <video 
-                            ref={videoRef} 
-                            className="w-full h-full" 
-                            controls 
-                            autoPlay 
-                            playsInline
-                        />
+                        <video ref={videoRef} className="w-full h-full" controls autoPlay playsInline />
                     </div>
                     
-                    {/* Metadata Overlay */}
                     <div className="p-4 bg-[#121212]">
                         <div className="flex justify-between items-start">
                             <div className="flex-1 mr-4">
                                 <h1 className="text-lg font-bold text-white leading-tight">{stream.name}</h1>
                                 <p className="text-xs text-gray-400 mt-1">{stream.group || 'Live Stream'}</p>
                             </div>
-                            <button 
-                                onClick={() => toggleFav(stream)} 
-                                className={`p-2 rounded-full border transition ${
-                                    isFav 
-                                        ? 'bg-red-500/20 border-red-500 text-red-500' 
-                                        : 'border-white/10 text-gray-400 hover:border-red-500 hover:text-red-500'
-                                }`}
-                            >
+                            <button onClick={() => toggleFav(stream)} className={`p-2 rounded-full border transition ${isFav ? 'bg-red-500/20 border-red-500 text-red-500' : 'border-white/10 text-gray-400 hover:border-red-500 hover:text-red-500'}`}>
                                 <Icon name="heart" size={20} className={isFav ? "fill-current" : ""} />
                             </button>
                         </div>
@@ -322,22 +251,10 @@
         };
 
         const ChannelCard = ({ channel, onClick, isFav }) => (
-            <div 
-                onClick={() => onClick(channel)} 
-                className="relative flex flex-col bg-[#18181b] rounded-xl overflow-hidden active:scale-95 transition-transform duration-100 cursor-pointer hover:ring-2 hover:ring-blue-500"
-            >
+            <div onClick={() => onClick(channel)} className="relative flex flex-col bg-[#18181b] rounded-xl overflow-hidden active:scale-95 transition-transform duration-100 cursor-pointer hover:ring-2 hover:ring-blue-500">
                 <div className="relative aspect-video bg-black/40 flex items-center justify-center p-4">
                     {channel.logo ? (
-                        <img 
-                            src={channel.logo} 
-                            alt={channel.name}
-                            className="w-full h-full object-contain" 
-                            loading="lazy" 
-                            onError={(e) => {
-                                e.target.style.display='none';
-                                e.target.parentElement.innerHTML = '<span class="text-2xl font-bold text-white/10">TV</span>';
-                            }}
-                        />
+                        <img src={channel.logo} alt={channel.name} className="w-full h-full object-contain" loading="lazy" onError={(e) => {e.target.style.display='none'; e.target.parentElement.innerHTML = '<span class="text-2xl font-bold text-white/10">TV</span>';}} />
                     ) : (
                         <span className="text-2xl font-bold text-white/10">TV</span>
                     )}
@@ -378,28 +295,25 @@
             
             // View & Filters
             const [view, setView] = useState('home');
-            const [selectedContext, setSelectedContext] = useState({ 
-                type: 'country', 
-                value: 'ca', 
-                name: 'Canada' 
-            });
+            const [exploreTab, setExploreTab] = useState('countries'); // 'countries', 'languages', 'categories'
+            const [selectedContext, setSelectedContext] = useState({ type: 'country', value: 'ca', name: 'Canada', flag: '🇨🇦' });
             const [activeCategory, setActiveCategory] = useState('All');
             
             const [currentStream, setCurrentStream] = useState(null);
             const [isSidebarOpen, setSidebarOpen] = useState(false);
             const [search, setSearch] = useState("");
+            const [searchFilter, setSearchFilter] = useState('all'); // 'all', 'channels', 'countries', 'languages'
+            const [showSearchFilter, setShowSearchFilter] = useState(false);
             const [showLogin, setShowLogin] = useState(false);
             const [loading, setLoading] = useState(false);
             const [error, setError] = useState("");
             const [firebase, setFirebase] = useState(null);
 
             // Persistence
-            const [pins, setPins] = useState([
-                { type: 'country', code: 'ca', name: 'Canada', flag: '🇨🇦' },
-                { type: 'country', code: 'us', name: 'United States', flag: '🇺🇸' }
-            ]);
+            const [pins, setPins] = useState([]);
             const [favorites, setFavorites] = useState([]);
 
+            // Load data from Firebase on mount
             useEffect(() => {
                 let unsubscribeAuth = () => {};
                 const boot = async () => {
@@ -417,9 +331,6 @@
                         console.error("API Error", e); 
                     }
 
-                    // Initial Playlist (Canada)
-                    loadPlaylist('country', 'ca', 'Canada');
-
                     // Firebase
                     try {
                         const fb = await initFirebase();
@@ -428,22 +339,48 @@
                             unsubscribeAuth = window.firebaseModules.onAuthStateChanged(fb.auth, (u) => {
                                 setUser(u);
                                 if (u && fb.db) {
+                                    // Real-time listener for user data
                                     window.firebaseModules.onSnapshot(
-                                        window.firebaseModules.doc(fb.db, 'artifacts', fb.appId, 'users', u.uid, 'profile'), 
+                                        window.firebaseModules.doc(fb.db, 'users', u.uid), 
                                         (snap) => {
                                             if (snap.exists()) {
                                                 const d = snap.data();
+                                                console.log("Loaded user data:", d);
                                                 if (d.favorites) setFavorites(d.favorites);
                                                 if (d.pins) setPins(d.pins);
+                                            } else {
+                                                // Initialize with defaults
+                                                const defaultPins = [
+                                                    { type: 'country', code: 'ca', name: 'Canada', flag: '🇨🇦' },
+                                                    { type: 'country', code: 'us', name: 'United States', flag: '🇺🇸' }
+                                                ];
+                                                setPins(defaultPins);
                                             }
+                                        },
+                                        (error) => {
+                                            console.error("Snapshot error:", error);
                                         }
                                     );
+                                } else {
+                                    // Not logged in - use defaults
+                                    setPins([
+                                        { type: 'country', code: 'ca', name: 'Canada', flag: '🇨🇦' },
+                                        { type: 'country', code: 'us', name: 'United States', flag: '🇺🇸' }
+                                    ]);
                                 }
                             });
                         }
                     } catch (e) {
                         console.error("Firebase Error", e);
+                        // Set defaults if Firebase fails
+                        setPins([
+                            { type: 'country', code: 'ca', name: 'Canada', flag: '🇨🇦' },
+                            { type: 'country', code: 'us', name: 'United States', flag: '🇺🇸' }
+                        ]);
                     }
+
+                    // Initial Playlist
+                    loadPlaylist('country', 'ca', 'Canada', '🇨🇦');
                 };
                 boot();
                 return () => unsubscribeAuth();
@@ -455,12 +392,10 @@
                 setChannels([]);
                 setSearch("");
                 setSidebarOpen(false);
-
                 setSelectedContext({ type, value: code, name, flag });
                 setView('home');
                 setActiveCategory('All'); 
                 
-                // Handle Favorites
                 if (type === 'fav') { 
                     setLoading(false); 
                     return; 
@@ -476,7 +411,6 @@
                     if (!res.ok) throw new Error("Playlist unavailable");
                     const text = await res.text();
                     
-                    // Robust M3U Parsing
                     const parsed = [];
                     const lines = text.split('\n');
                     let curr = {};
@@ -501,10 +435,7 @@
                         }
                     });
 
-                    if (parsed.length === 0) {
-                        throw new Error("No channels found in this playlist");
-                    }
-                    
+                    if (parsed.length === 0) throw new Error("No channels found in this playlist");
                     setChannels(parsed);
                 } catch (e) {
                     console.error(e);
@@ -525,12 +456,13 @@
                 if (user && firebase) {
                     try {
                         await window.firebaseModules.setDoc(
-                            window.firebaseModules.doc(firebase.db, 'artifacts', firebase.appId, 'users', user.uid, 'profile'), 
-                            { pins: newPins }, 
+                            window.firebaseModules.doc(firebase.db, 'users', user.uid), 
+                            { pins: newPins, favorites: favorites }, 
                             { merge: true }
                         );
+                        console.log("Pins saved successfully");
                     } catch (e) {
-                        console.error("Pin save failed", e);
+                        console.error("Pin save failed:", e);
                     }
                 }
             };
@@ -546,12 +478,13 @@
                 if (user && firebase) {
                     try {
                         await window.firebaseModules.setDoc(
-                            window.firebaseModules.doc(firebase.db, 'artifacts', firebase.appId, 'users', user.uid, 'profile'), 
-                            { favorites: newFavs }, 
+                            window.firebaseModules.doc(firebase.db, 'users', user.uid), 
+                            { pins: pins, favorites: newFavs }, 
                             { merge: true }
                         );
+                        console.log("Favorites saved successfully");
                     } catch (e) {
-                        console.error("Favorite save failed", e);
+                        console.error("Favorite save failed:", e);
                     }
                 }
             };
@@ -562,7 +495,6 @@
                 window.scrollTo({top: 0, behavior: 'smooth'});
             };
 
-            // Derived Data
             const currentCategories = useMemo(() => {
                 if (selectedContext.type === 'fav') return ['All'];
                 const cats = new Set(channels.map(c => c.group).filter(Boolean));
@@ -578,127 +510,80 @@
                 
                 if (search.trim()) {
                     const searchLower = search.toLowerCase();
-                    data = data.filter(c => 
-                        c.name.toLowerCase().includes(searchLower) || 
-                        c.group?.toLowerCase().includes(searchLower)
-                    );
+                    if (searchFilter === 'channels' || searchFilter === 'all') {
+                        data = data.filter(c => 
+                            c.name.toLowerCase().includes(searchLower) || 
+                            c.group?.toLowerCase().includes(searchLower)
+                        );
+                    }
                 }
                 
                 return data;
-            }, [channels, favorites, selectedContext, activeCategory, search]);
+            }, [channels, favorites, selectedContext, activeCategory, search, searchFilter]);
+
+            // For search in explore view
+            const filteredCountries = useMemo(() => {
+                if (!search) return countries;
+                if (searchFilter === 'countries' || searchFilter === 'all') {
+                    return countries.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
+                }
+                return countries;
+            }, [countries, search, searchFilter]);
+
+            const filteredLanguages = useMemo(() => {
+                if (!search) return languages;
+                if (searchFilter === 'languages' || searchFilter === 'all') {
+                    return languages.filter(l => l.name.toLowerCase().includes(search.toLowerCase()));
+                }
+                return languages;
+            }, [languages, search, searchFilter]);
 
             return (
                 <div className="flex h-screen w-full bg-[#09090b]">
                     
                     {/* MOBILE SIDEBAR OVERLAY */}
-                    <div 
-                        className={`fixed inset-0 z-50 bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${
-                            isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                        }`} 
-                        onClick={() => setSidebarOpen(false)}
-                    ></div>
+                    <div className={`fixed inset-0 z-50 bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setSidebarOpen(false)}></div>
                     
                     {/* SIDEBAR */}
-                    <div className={`fixed inset-y-0 left-0 w-[80%] max-w-sm bg-[#121212] border-r border-white/10 z-50 transform transition-transform duration-300 flex flex-col shadow-2xl ${
-                        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                    } md:relative md:translate-x-0 md:w-64`}>
+                    <div className={`fixed inset-y-0 left-0 w-[80%] max-w-sm bg-[#121212] border-r border-white/10 z-50 transform transition-transform duration-300 flex flex-col shadow-2xl ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 md:w-64`}>
                         
-                        {/* Header */}
                         <div className="p-6 pt-10 md:pt-6 flex justify-between items-center border-b border-white/5">
-                            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
-                                FSTV
-                            </h1>
-                            <button 
-                                onClick={()=>setSidebarOpen(false)} 
-                                className="md:hidden p-2 hover:bg-white/5 rounded-lg transition"
-                            >
+                            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">FSTV</h1>
+                            <button onClick={()=>setSidebarOpen(false)} className="md:hidden p-2 hover:bg-white/5 rounded-lg transition">
                                 <Icon name="x" className="text-gray-400" />
                             </button>
                         </div>
                         
-                        {/* Navigation */}
                         <div className="flex-1 overflow-y-auto px-4 pb-4 pt-4">
                             <div className="space-y-1 mb-6">
-                                <button 
-                                    onClick={()=>{
-                                        setView('home'); 
-                                        setSidebarOpen(false);
-                                    }} 
-                                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition ${
-                                        view === 'home' && selectedContext.type !== 'fav' 
-                                            ? 'bg-blue-600 text-white font-medium' 
-                                            : 'text-gray-400 hover:bg-white/5'
-                                    }`}
-                                >
+                                <button onClick={()=>{setView('home'); setSidebarOpen(false);}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition ${view === 'home' && selectedContext.type !== 'fav' ? 'bg-blue-600 text-white font-medium' : 'text-gray-400 hover:bg-white/5'}`}>
                                     <Icon name="home" size={20} /> Home
                                 </button>
                                 
-                                <button 
-                                    onClick={()=>{
-                                        setView('explore'); 
-                                        setSidebarOpen(false);
-                                    }} 
-                                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition ${
-                                        view === 'explore' 
-                                            ? 'bg-blue-600 text-white font-medium' 
-                                            : 'text-gray-400 hover:bg-white/5'
-                                    }`}
-                                >
+                                <button onClick={()=>{setView('explore'); setSidebarOpen(false);}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition ${view === 'explore' ? 'bg-blue-600 text-white font-medium' : 'text-gray-400 hover:bg-white/5'}`}>
                                     <Icon name="globe" size={20} /> Explore World
                                 </button>
                                 
-                                <button 
-                                    onClick={()=>{
-                                        loadPlaylist('fav', 'fav', 'Favorites');
-                                    }} 
-                                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition ${
-                                        selectedContext.type === 'fav' 
-                                            ? 'bg-blue-600 text-white font-medium' 
-                                            : 'text-gray-400 hover:bg-white/5'
-                                    }`}
-                                >
+                                <button onClick={()=>{loadPlaylist('fav', 'fav', 'Favorites');}} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition ${selectedContext.type === 'fav' ? 'bg-blue-600 text-white font-medium' : 'text-gray-400 hover:bg-white/5'}`}>
                                     <Icon name="heart" size={20} /> 
                                     Favorites
                                     {favorites.length > 0 && (
-                                        <span className="ml-auto text-xs bg-white/10 px-2 py-0.5 rounded-full">
-                                            {favorites.length}
-                                        </span>
+                                        <span className="ml-auto text-xs bg-white/10 px-2 py-0.5 rounded-full">{favorites.length}</span>
                                     )}
                                 </button>
                             </div>
 
-                            {/* Pinned Items */}
                             {pins.length > 0 && (
                                 <>
-                                    <div className="mb-2 px-3 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        Pinned
-                                    </div>
+                                    <div className="mb-2 px-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Pinned</div>
                                     <div className="space-y-1 mb-6">
                                         {pins.map((pin, i) => (
-                                            <button 
-                                                key={i} 
-                                                onClick={()=>loadPlaylist(pin.type, pin.code, pin.name, pin.flag)} 
-                                                className={`w-full flex items-center justify-between px-3 py-3 rounded-xl transition text-sm ${
-                                                    selectedContext.value === pin.code && selectedContext.type === pin.type
-                                                        ? 'bg-white/10 text-white' 
-                                                        : 'text-gray-400 hover:bg-white/5'
-                                                }`}
-                                            >
+                                            <button key={i} onClick={()=>loadPlaylist(pin.type, pin.code, pin.name, pin.flag)} className={`w-full flex items-center justify-between px-3 py-3 rounded-xl transition text-sm ${selectedContext.value === pin.code && selectedContext.type === pin.type ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5'}`}>
                                                 <div className="flex items-center gap-3 truncate">
-                                                    {pin.flag ? (
-                                                        <span className="text-xl">{pin.flag}</span>
-                                                    ) : (
-                                                        <Icon name="tag" size={16} />
-                                                    )}
+                                                    {pin.flag ? <span className="text-xl">{pin.flag}</span> : <Icon name="tag" size={16} />}
                                                     <span className="truncate">{pin.name}</span>
                                                 </div>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        togglePin(pin);
-                                                    }}
-                                                    className="text-gray-500 hover:text-red-500 transition"
-                                                >
+                                                <button onClick={(e)=>{e.stopPropagation(); togglePin(pin);}} className="text-gray-500 hover:text-red-500 transition">
                                                     <Icon name="x" size={14} />
                                                 </button>
                                             </button>
@@ -707,7 +592,6 @@
                                 </>
                             )}
 
-                            {/* Categories Filter */}
                             {channels.length > 0 && selectedContext.type !== 'fav' && view === 'home' && (
                                 <>
                                     <div className="mb-2 px-3 text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
@@ -716,23 +600,9 @@
                                     </div>
                                     <div className="space-y-1 max-h-96 overflow-y-auto">
                                         {currentCategories.map((cat, i) => {
-                                            const count = cat === 'All' 
-                                                ? channels.length 
-                                                : channels.filter(c => c.group === cat).length;
-                                            
+                                            const count = cat === 'All' ? channels.length : channels.filter(c => c.group === cat).length;
                                             return (
-                                                <button 
-                                                    key={i} 
-                                                    onClick={()=>{
-                                                        setActiveCategory(cat); 
-                                                        setSidebarOpen(false);
-                                                    }} 
-                                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex justify-between items-center ${
-                                                        activeCategory === cat 
-                                                            ? 'text-blue-400 bg-blue-500/10 font-medium' 
-                                                            : 'text-gray-400 hover:bg-white/5'
-                                                    }`}
-                                                >
+                                                <button key={i} onClick={()=>{setActiveCategory(cat); setSidebarOpen(false);}} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex justify-between items-center ${activeCategory === cat ? 'text-blue-400 bg-blue-500/10 font-medium' : 'text-gray-400 hover:bg-white/5'}`}>
                                                     <span className="truncate">{cat}</span>
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-xs text-gray-600">{count}</span>
@@ -755,19 +625,13 @@
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-xs truncate text-gray-200 font-medium">{user.email}</p>
-                                        <button 
-                                            onClick={()=>window.firebaseModules.signOut(firebase.auth)} 
-                                            className="text-xs text-red-400 hover:text-red-300 transition"
-                                        >
+                                        <button onClick={()=>window.firebaseModules.signOut(firebase.auth)} className="text-xs text-red-400 hover:text-red-300 transition">
                                             Sign Out
                                         </button>
                                     </div>
                                 </div>
                             ) : (
-                                <button 
-                                    onClick={()=>setShowLogin(true)} 
-                                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 py-3 rounded-xl text-sm font-bold hover:from-blue-700 hover:to-indigo-700 transition shadow-lg"
-                                >
+                                <button onClick={()=>setShowLogin(true)} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 py-3 rounded-xl text-sm font-bold hover:from-blue-700 hover:to-indigo-700 transition shadow-lg">
                                     Login to Sync
                                 </button>
                             )}
@@ -779,42 +643,48 @@
                         
                         {/* Header */}
                         <div className="h-16 flex items-center px-4 gap-3 bg-black/40 backdrop-blur z-20 border-b border-white/5 flex-shrink-0">
-                            <button 
-                                onClick={()=>setSidebarOpen(true)} 
-                                className="md:hidden p-2 -ml-2 hover:bg-white/5 rounded-lg transition"
-                            >
+                            <button onClick={()=>setSidebarOpen(true)} className="md:hidden p-2 -ml-2 hover:bg-white/5 rounded-lg transition">
                                 <Icon name="menu" className="text-white" />
                             </button>
                             
-                            {/* Search Bar */}
+                            {/* Search Bar with Filter */}
                             <div className="flex-1 relative">
-                                <input 
-                                    type="text" 
-                                    value={search} 
-                                    onChange={e=>setSearch(e.target.value)} 
-                                    placeholder={
-                                        view === 'explore' 
-                                            ? 'Search countries...' 
-                                            : selectedContext.type === 'fav'
-                                                ? 'Search favorites...'
-                                                : `Search ${selectedContext.name}...`
-                                    } 
-                                    className="w-full bg-[#1e1e24] rounded-full py-2.5 pl-10 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition shadow-inner" 
-                                />
+                                <input type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder={view==='explore' ? 'Search world...' : `Search ${selectedContext.name}...`} className="w-full bg-[#1e1e24] rounded-full py-2.5 pl-10 pr-24 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition shadow-inner" />
                                 <div className="absolute left-3.5 top-3 text-gray-500">
                                     <Icon name="search" size={16} />
                                 </div>
+                                <div className="absolute right-2 top-1.5">
+                                    <div className="relative">
+                                        <button onClick={()=>setShowSearchFilter(!showSearchFilter)} className="flex items-center gap-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-full text-xs font-medium transition">
+                                            <Icon name="filter" size={12} />
+                                            {searchFilter === 'all' ? 'All' : searchFilter === 'channels' ? 'Channels' : searchFilter === 'countries' ? 'Countries' : 'Languages'}
+                                            <Icon name="chevron-down" size={12} />
+                                        </button>
+                                        {showSearchFilter && (
+                                            <div className="absolute right-0 top-full mt-2 bg-[#1e1e24] border border-white/10 rounded-lg shadow-xl min-w-[120px] z-50">
+                                                <button onClick={()=>{setSearchFilter('all'); setShowSearchFilter(false);}} className={`w-full px-4 py-2 text-left text-sm hover:bg-white/5 first:rounded-t-lg ${searchFilter === 'all' ? 'text-blue-400 bg-blue-500/10' : 'text-gray-300'}`}>
+                                                    All
+                                                </button>
+                                                <button onClick={()=>{setSearchFilter('channels'); setShowSearchFilter(false);}} className={`w-full px-4 py-2 text-left text-sm hover:bg-white/5 ${searchFilter === 'channels' ? 'text-blue-400 bg-blue-500/10' : 'text-gray-300'}`}>
+                                                    Channels
+                                                </button>
+                                                <button onClick={()=>{setSearchFilter('countries'); setShowSearchFilter(false);}} className={`w-full px-4 py-2 text-left text-sm hover:bg-white/5 ${searchFilter === 'countries' ? 'text-blue-400 bg-blue-500/10' : 'text-gray-300'}`}>
+                                                    Countries
+                                                </button>
+                                                <button onClick={()=>{setSearchFilter('languages'); setShowSearchFilter(false);}} className={`w-full px-4 py-2 text-left text-sm hover:bg-white/5 last:rounded-b-lg ${searchFilter === 'languages' ? 'text-blue-400 bg-blue-500/10' : 'text-gray-300'}`}>
+                                                    Languages
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                                 {search && (
-                                    <button
-                                        onClick={() => setSearch("")}
-                                        className="absolute right-3 top-2.5 text-gray-500 hover:text-white transition"
-                                    >
+                                    <button onClick={() => setSearch("")} className="absolute right-24 top-2.5 text-gray-500 hover:text-white transition">
                                         <Icon name="x" size={16} />
                                     </button>
                                 )}
                             </div>
 
-                            {/* Context Indicator (Desktop) */}
                             {view === 'home' && selectedContext.type !== 'fav' && (
                                 <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full">
                                     {selectedContext.flag && <span className="text-lg">{selectedContext.flag}</span>}
@@ -826,7 +696,6 @@
                         {/* Content Area */}
                         <div className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth safe-area-bottom">
                             
-                            {/* ERROR STATE */}
                             {error && !loading && (
                                 <div className="flex flex-col items-center justify-center h-96 text-center px-6">
                                     <div className="bg-red-500/10 p-6 rounded-full mb-4">
@@ -834,13 +703,7 @@
                                     </div>
                                     <h3 className="text-xl font-bold mb-2">Something Went Wrong</h3>
                                     <p className="text-gray-400 text-sm mb-6 max-w-md">{error}</p>
-                                    <button 
-                                        onClick={()=>{
-                                            setView('explore');
-                                            setError("");
-                                        }} 
-                                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition"
-                                    >
+                                    <button onClick={()=>{setView('explore'); setError("");}} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition">
                                         Browse Other Channels
                                     </button>
                                 </div>
@@ -851,250 +714,147 @@
                                 <div className="flex flex-col lg:flex-row h-full">
                                     <div className="flex-1 lg:overflow-y-auto">
                                         <div className="sticky top-0 z-30 bg-black">
-                                            <button 
-                                                onClick={()=>setView('home')} 
-                                                className="absolute top-4 left-4 z-40 bg-black/70 hover:bg-black p-2 rounded-full backdrop-blur md:hidden transition"
-                                            >
+                                            <button onClick={()=>setView('home')} className="absolute top-4 left-4 z-40 bg-black/70 hover:bg-black p-2 rounded-full backdrop-blur md:hidden transition">
                                                 <Icon name="arrow-left" className="text-white" size={20} />
                                             </button>
-                                            <VideoPlayer 
-                                                stream={currentStream} 
-                                                toggleFav={toggleFav} 
-                                                isFav={favorites.some(f=>f.url===currentStream.url)} 
-                                            />
+                                            <VideoPlayer stream={currentStream} toggleFav={toggleFav} isFav={favorites.some(f=>f.url===currentStream.url)} />
                                         </div>
                                         
-                                        {/* Mobile: Up Next List */}
                                         <div className="p-4 lg:hidden">
-                                            <h3 className="font-bold mb-3 text-gray-400 text-xs uppercase tracking-wider">
-                                                Up Next
-                                            </h3>
+                                            <h3 className="font-bold mb-3 text-gray-400 text-xs uppercase tracking-wider">Up Next</h3>
                                             <div className="space-y-2">
-                                                {displayedChannels
-                                                    .filter(c=>c.url!==currentStream.url)
-                                                    .slice(0, 20)
-                                                    .map((c,i) => (
-                                                        <div 
-                                                            key={i} 
-                                                            onClick={()=>playChannel(c)} 
-                                                            className="flex gap-3 p-3 bg-[#18181b] hover:bg-[#1f1f23] rounded-xl cursor-pointer transition active:scale-98"
-                                                        >
-                                                            <div className="w-24 aspect-video bg-black rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                                                                {c.logo ? (
-                                                                    <img 
-                                                                        src={c.logo} 
-                                                                        alt={c.name}
-                                                                        className="h-full object-contain" 
-                                                                        onError={e=>e.target.style.display='none'}
-                                                                    />
-                                                                ) : (
-                                                                    <span className="text-white/10 font-bold">TV</span>
-                                                                )}
-                                                            </div>
-                                                            <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                                                <p className="text-sm font-medium truncate text-white">{c.name}</p>
-                                                                <p className="text-xs text-gray-500 truncate">{c.group}</p>
-                                                            </div>
-                                                        </div>
-                                                    ))
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Desktop: Up Next Sidebar */}
-                                    <div className="hidden lg:block w-96 border-l border-white/5 bg-[#0c0c0e] overflow-y-auto h-full">
-                                        <div className="p-4 sticky top-0 bg-[#0c0c0e] border-b border-white/5 z-10">
-                                            <h3 className="font-bold text-gray-400 text-xs uppercase tracking-wider">
-                                                Up Next
-                                            </h3>
-                                        </div>
-                                        <div className="p-4 space-y-2">
-                                            {displayedChannels
-                                                .filter(c=>c.url!==currentStream.url)
-                                                .slice(0, 50)
-                                                .map((c,i) => (
-                                                    <div 
-                                                        key={i} 
-                                                        onClick={()=>playChannel(c)} 
-                                                        className="flex gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer transition"
-                                                    >
-                                                        <div className="w-28 aspect-video bg-black rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                                                            {c.logo ? (
-                                                                <img 
-                                                                    src={c.logo} 
-                                                                    alt={c.name}
-                                                                    className="h-full object-contain" 
-                                                                    onError={e=>e.target.style.display='none'}
-                                                                />
-                                                            ) : (
-                                                                <span className="text-white/10 font-bold">TV</span>
-                                                            )}
+                                                {displayedChannels.filter(c=>c.url!==currentStream.url).slice(0,20).map((c,i) => (
+                                                    <div key={i} onClick={()=>playChannel(c)} className="flex gap-3 p-3 bg-[#18181b] hover:bg-[#1f1f23] rounded-xl cursor-pointer transition">
+                                                        <div className="w-24 aspect-video bg-black rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                            {c.logo ? <img src={c.logo} alt={c.name} className="h-full object-contain" onError={e=>e.target.style.display='none'}/> : <span className="text-white/10 font-bold">TV</span>}
                                                         </div>
                                                         <div className="flex-1 min-w-0 flex flex-col justify-center">
                                                             <p className="text-sm font-medium truncate text-white">{c.name}</p>
                                                             <p className="text-xs text-gray-500 truncate">{c.group}</p>
                                                         </div>
                                                     </div>
-                                                ))
-                                            }
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="hidden lg:block w-96 border-l border-white/5 bg-[#0c0c0e] overflow-y-auto h-full">
+                                        <div className="p-4 sticky top-0 bg-[#0c0c0e] border-b border-white/5 z-10">
+                                            <h3 className="font-bold text-gray-400 text-xs uppercase tracking-wider">Up Next</h3>
+                                        </div>
+                                        <div className="p-4 space-y-2">
+                                            {displayedChannels.filter(c=>c.url!==currentStream.url).slice(0,50).map((c,i) => (
+                                                <div key={i} onClick={()=>playChannel(c)} className="flex gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer transition">
+                                                    <div className="w-28 aspect-video bg-black rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                        {c.logo ? <img src={c.logo} alt={c.name} className="h-full object-contain" onError={e=>e.target.style.display='none'}/> : <span className="text-white/10 font-bold">TV</span>}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                                        <p className="text-sm font-medium truncate text-white">{c.name}</p>
+                                                        <p className="text-xs text-gray-500 truncate">{c.group}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
                             )}
 
-                            {/* EXPLORE VIEW */}
+                            {/* EXPLORE VIEW with TABS */}
                             {view === 'explore' && !loading && !error && (
                                 <div className="p-4 pb-20">
                                     <h2 className="text-3xl font-bold mb-6">Explore the World</h2>
                                     
-                                    {/* Categories Section */}
-                                    {categories.length > 0 && (
-                                        <>
-                                            <h3 className="text-lg font-bold mb-4 text-gray-400 flex items-center gap-2">
-                                                <Icon name="layout-grid" size={20} />
-                                                Categories
-                                            </h3>
-                                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
-                                                {categories.slice(0, 20).map(c => {
-                                                    const isPinned = pins.some(p => p.code === c.id && p.type === 'category');
-                                                    return (
-                                                        <div 
-                                                            key={c.id} 
-                                                            onClick={()=>loadPlaylist('category', c.id, c.name)}
-                                                            className="bg-gradient-to-br from-[#18181b] to-[#1f1f23] p-4 rounded-xl flex items-center justify-between cursor-pointer hover:ring-2 hover:ring-blue-500 transition active:scale-95 group"
-                                                        >
-                                                            <span className="font-medium text-white group-hover:text-blue-400 transition">
-                                                                {c.name}
-                                                            </span>
-                                                            <button 
-                                                                onClick={(e)=>{
-                                                                    e.stopPropagation(); 
-                                                                    togglePin({type:'category', code:c.id, name:c.name});
-                                                                }} 
-                                                                className={`p-1.5 rounded-lg transition ${
-                                                                    isPinned 
-                                                                        ? 'text-blue-500 bg-blue-500/20' 
-                                                                        : 'text-gray-500 hover:text-blue-500 hover:bg-blue-500/10'
-                                                                }`}
-                                                            >
-                                                                <Icon name="pin" size={16} />
-                                                            </button>
-                                                        </div>
-                                                    );
-                                                })}
+                                    {/* Tabs */}
+                                    <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                                        <button onClick={()=>setExploreTab('countries')} className={`px-6 py-3 rounded-xl font-semibold transition whitespace-nowrap ${exploreTab === 'countries' ? 'bg-blue-600 text-white' : 'bg-[#18181b] text-gray-400 hover:bg-[#1f1f23]'}`}>
+                                            <div className="flex items-center gap-2">
+                                                <Icon name="globe" size={20} />
+                                                Countries ({filteredCountries.length})
                                             </div>
-                                        </>
-                                    )}
-                                    
-                                    {/* Countries Section */}
-                                    <h3 className="text-lg font-bold mb-4 text-gray-400 flex items-center gap-2">
-                                        <Icon name="globe" size={20} />
-                                        Countries ({countries.filter(c => c.name.toLowerCase().includes(search.toLowerCase())).length})
-                                    </h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                        {countries
-                                            .filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
-                                            .map(c => {
+                                        </button>
+                                        <button onClick={()=>setExploreTab('languages')} className={`px-6 py-3 rounded-xl font-semibold transition whitespace-nowrap ${exploreTab === 'languages' ? 'bg-blue-600 text-white' : 'bg-[#18181b] text-gray-400 hover:bg-[#1f1f23]'}`}>
+                                            <div className="flex items-center gap-2">
+                                                <Icon name="map" size={20} />
+                                                Languages ({filteredLanguages.length})
+                                            </div>
+                                        </button>
+                                        <button onClick={()=>setExploreTab('categories')} className={`px-6 py-3 rounded-xl font-semibold transition whitespace-nowrap ${exploreTab === 'categories' ? 'bg-blue-600 text-white' : 'bg-[#18181b] text-gray-400 hover:bg-[#1f1f23]'}`}>
+                                            <div className="flex items-center gap-2">
+                                                <Icon name="layout-grid" size={20} />
+                                                Categories ({categories.length})
+                                            </div>
+                                        </button>
+                                    </div>
+
+                                    {/* Countries Tab */}
+                                    {exploreTab === 'countries' && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                            {filteredCountries.map(c => {
                                                 const isPinned = pins.some(p => p.code === c.code.toLowerCase() && p.type === 'country');
                                                 return (
-                                                    <div 
-                                                        key={c.code} 
-                                                        onClick={()=>loadPlaylist('country', c.code.toLowerCase(), c.name, c.flag)}
-                                                        className="bg-gradient-to-br from-[#18181b] to-[#1f1f23] p-4 rounded-xl flex items-center justify-between cursor-pointer hover:ring-2 hover:ring-blue-500 transition active:scale-95 group"
-                                                    >
+                                                    <div key={c.code} onClick={()=>loadPlaylist('country', c.code.toLowerCase(), c.name, c.flag)} className="bg-gradient-to-br from-[#18181b] to-[#1f1f23] p-4 rounded-xl flex items-center justify-between cursor-pointer hover:ring-2 hover:ring-blue-500 transition group">
                                                         <div className="flex items-center gap-3 truncate flex-1">
-                                                            <span className="text-2xl flex-shrink-0">{c.flag}</span>
-                                                            <span className="text-sm font-medium truncate text-white group-hover:text-blue-400 transition">
-                                                                {c.name}
-                                                            </span>
+                                                            <span className="text-3xl flex-shrink-0">{c.flag || '🌐'}</span>
+                                                            <span className="text-sm font-medium truncate text-white group-hover:text-blue-400 transition">{c.name}</span>
                                                         </div>
-                                                        <button 
-                                                            onClick={(e)=>{
-                                                                e.stopPropagation(); 
-                                                                togglePin({
-                                                                    type:'country', 
-                                                                    code:c.code.toLowerCase(), 
-                                                                    name:c.name,
-                                                                    flag: c.flag
-                                                                });
-                                                            }} 
-                                                            className={`p-1.5 rounded-lg transition flex-shrink-0 ${
-                                                                isPinned 
-                                                                    ? 'text-blue-500 bg-blue-500/20' 
-                                                                    : 'text-gray-500 hover:text-blue-500 hover:bg-blue-500/10'
-                                                            }`}
-                                                        >
+                                                        <button onClick={(e)=>{e.stopPropagation(); togglePin({type:'country', code:c.code.toLowerCase(), name:c.name, flag:c.flag || '🌐'});}} className={`p-1.5 rounded-lg transition flex-shrink-0 ${isPinned ? 'text-blue-500 bg-blue-500/20' : 'text-gray-500 hover:text-blue-500 hover:bg-blue-500/10'}`}>
                                                             <Icon name="pin" size={16} />
                                                         </button>
                                                     </div>
                                                 );
-                                            })
-                                        }
-                                    </div>
+                                            })}
+                                        </div>
+                                    )}
 
-                                    {/* Languages Section */}
-                                    {languages.length > 0 && (
-                                        <>
-                                            <h3 className="text-lg font-bold mt-8 mb-4 text-gray-400 flex items-center gap-2">
-                                                <Icon name="map" size={20} />
-                                                Languages
-                                            </h3>
-                                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                                {languages.slice(0, 20).map(l => {
-                                                    const isPinned = pins.some(p => p.code === l.code && p.type === 'lang');
-                                                    return (
-                                                        <div 
-                                                            key={l.code} 
-                                                            onClick={()=>loadPlaylist('lang', l.code, l.name)}
-                                                            className="bg-gradient-to-br from-[#18181b] to-[#1f1f23] p-4 rounded-xl flex items-center justify-between cursor-pointer hover:ring-2 hover:ring-blue-500 transition active:scale-95 group"
-                                                        >
-                                                            <span className="font-medium text-white group-hover:text-blue-400 transition truncate">
-                                                                {l.name}
-                                                            </span>
-                                                            <button 
-                                                                onClick={(e)=>{
-                                                                    e.stopPropagation(); 
-                                                                    togglePin({type:'lang', code:l.code, name:l.name});
-                                                                }} 
-                                                                className={`p-1.5 rounded-lg transition ${
-                                                                    isPinned 
-                                                                        ? 'text-blue-500 bg-blue-500/20' 
-                                                                        : 'text-gray-500 hover:text-blue-500 hover:bg-blue-500/10'
-                                                                }`}
-                                                            >
-                                                                <Icon name="pin" size={16} />
-                                                            </button>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </>
+                                    {/* Languages Tab */}
+                                    {exploreTab === 'languages' && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                            {filteredLanguages.map(l => {
+                                                const isPinned = pins.some(p => p.code === l.code && p.type === 'lang');
+                                                return (
+                                                    <div key={l.code} onClick={()=>loadPlaylist('lang', l.code, l.name)} className="bg-gradient-to-br from-[#18181b] to-[#1f1f23] p-4 rounded-xl flex items-center justify-between cursor-pointer hover:ring-2 hover:ring-blue-500 transition group">
+                                                        <span className="font-medium text-white group-hover:text-blue-400 transition truncate flex-1">{l.name}</span>
+                                                        <button onClick={(e)=>{e.stopPropagation(); togglePin({type:'lang', code:l.code, name:l.name});}} className={`p-1.5 rounded-lg transition flex-shrink-0 ${isPinned ? 'text-blue-500 bg-blue-500/20' : 'text-gray-500 hover:text-blue-500 hover:bg-blue-500/10'}`}>
+                                                            <Icon name="pin" size={16} />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    {/* Categories Tab */}
+                                    {exploreTab === 'categories' && (
+                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                            {categories.map(c => {
+                                                const isPinned = pins.some(p => p.code === c.id && p.type === 'category');
+                                                return (
+                                                    <div key={c.id} onClick={()=>loadPlaylist('category', c.id, c.name)} className="bg-gradient-to-br from-[#18181b] to-[#1f1f23] p-4 rounded-xl flex items-center justify-between cursor-pointer hover:ring-2 hover:ring-blue-500 transition group">
+                                                        <span className="font-medium text-white group-hover:text-blue-400 transition truncate flex-1">{c.name}</span>
+                                                        <button onClick={(e)=>{e.stopPropagation(); togglePin({type:'category', code:c.id, name:c.name});}} className={`p-1.5 rounded-lg transition flex-shrink-0 ${isPinned ? 'text-blue-500 bg-blue-500/20' : 'text-gray-500 hover:text-blue-500 hover:bg-blue-500/10'}`}>
+                                                            <Icon name="pin" size={16} />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     )}
                                 </div>
                             )}
 
-                            {/* HOME VIEW (Channel Grid) */}
+                            {/* HOME VIEW */}
                             {view === 'home' && !loading && !error && (
                                 <div className="p-4 pb-24">
                                     {displayedChannels.length > 0 ? (
                                         <>
                                             <div className="mb-4 flex items-center justify-between">
                                                 <h2 className="text-lg font-bold text-gray-400">
-                                                    {selectedContext.type === 'fav' 
-                                                        ? `${displayedChannels.length} Favorites` 
-                                                        : `${displayedChannels.length} Channels`
-                                                    }
+                                                    {selectedContext.type === 'fav' ? `${displayedChannels.length} Favorites` : `${displayedChannels.length} Channels`}
                                                 </h2>
                                             </div>
                                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                                                 {displayedChannels.map((c, i) => (
-                                                    <ChannelCard 
-                                                        key={i} 
-                                                        channel={c} 
-                                                        onClick={playChannel} 
-                                                        isFav={favorites.some(f=>f.url===c.url)} 
-                                                    />
+                                                    <ChannelCard key={i} channel={c} onClick={playChannel} isFav={favorites.some(f=>f.url===c.url)} />
                                                 ))}
                                             </div>
                                         </>
@@ -1105,18 +865,10 @@
                                             </div>
                                             <h3 className="text-xl font-bold mb-2">No Channels Found</h3>
                                             <p className="text-gray-400 text-sm mb-6">
-                                                {search 
-                                                    ? `No results for "${search}"` 
-                                                    : selectedContext.type === 'fav'
-                                                        ? "Start adding channels to your favorites!"
-                                                        : "Try selecting a different category or region"
-                                                }
+                                                {search ? `No results for "${search}"` : selectedContext.type === 'fav' ? "Start adding channels to your favorites!" : "Try selecting a different category or region"}
                                             </p>
                                             {search && (
-                                                <button 
-                                                    onClick={()=>setSearch("")}
-                                                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition"
-                                                >
+                                                <button onClick={()=>setSearch("")} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition">
                                                     Clear Search
                                                 </button>
                                             )}
@@ -1125,7 +877,6 @@
                                 </div>
                             )}
 
-                            {/* LOADING STATE */}
                             {loading && (
                                 <div className="p-4 pb-20">
                                     <LoadingSkeleton />
@@ -1134,14 +885,8 @@
                         </div>
                     </div>
 
-                    {/* AUTH MODAL */}
-                    {showLogin && firebase && (
-                        <AuthModal 
-                            onClose={()=>setShowLogin(false)} 
-                            firebase={firebase} 
-                            onLogin={(u)=>setUser(u)} 
-                        />
-                    )}
+                    {showLogin && firebase && <AuthModal onClose={()=>setShowLogin(false)} firebase={firebase} onLogin={(u)=>setUser(u)} />}
+                    {showSearchFilter && <div className="fixed inset-0 z-40" onClick={()=>setShowSearchFilter(false)}></div>}
                 </div>
             );
         };
